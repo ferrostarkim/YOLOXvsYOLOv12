@@ -1,82 +1,163 @@
-# YOLOXvsYOLOv12
-Evaluation code and preprocessing routines for the paper 'Real-Time Object Detection for Edge Computing-Based Agricultural Automation
-# Real-Time Object Detection for Edge Computing-Based Agricultural Automation: YOLOX vs. YOLOv12
+# Real-Time Object Detection for Edge Computing-Based Agricultural Automation: YOLOX vs YOLOv12
 
-This repository contains the code and evaluation scripts for the research paper: "Real-Time Object Detection for Edge Computing-Based Agricultural Automation: A Comparative Analysis of YOLOX and YOLOv12 Architectures and Performance"[cite: 1]. This study provides a comprehensive comparison of YOLOX and YOLOv12 object detection models, specifically tailored for potato harvesting applications on the Jetson AGX Orin platform. [cite: 1, 3]
+This repository contains the implementation code and profiling data for the comparative analysis of YOLOX and YOLOv12 object detection models on NVIDIA Jetson AGX Orin for agricultural automation systems.
 
-## Overview
+## Paper Information
 
-The project focuses on evaluating YOLOX and YOLOv12 for real-time crop and impurity differentiation in agricultural automation. [cite: 9] We analyze architectural differences[cite: 2, 4, 5], performance metrics (speed, accuracy, resource utilization)[cite: 3, 6], and class-specific/size-specific detection capabilities, particularly in data-imbalanced agricultural environments. [cite: 3, 72, 76] The goal is to provide empirically-grounded guidelines for model selection in edge computing scenarios for agricultural robotics. [cite: 7]
+**Title:** Real-Time Object Detection for Edge Computing-Based Agricultural Automation: A Comparative Analysis of YOLOX and YOLOv12 Architectures and Performance
 
-**System Architecture:** The target application is an integrated AI potato harvester system where an RGB camera captures images of objects on a conveyor. [cite: 16] An AI edge computer processes these images to classify objects as potatoes or impurities. [cite: 17] Based on this, a PLC controls an air cylinder to sort impurities. [cite: 18, 19] (See Figure 1 in the paper [cite: 15]). This research compares a single-process YOLOX implementation with a multi-process YOLOv12 implementation. [cite: 54, 56, 57, 59]
+**Authors:** Joonam Kim, Giryon Kim, Rena Yoshitoshi, Kenichi Tokuda
 
-**Key Findings:**
-* YOLOX achieves significantly higher throughput (FPS) on the Jetson AGX Orin. [cite: 3]
-* YOLOv12 demonstrates superior detection for challenging classes (e.g., soil clods) and small objects, particularly in data-imbalanced contexts. [cite: 3]
-* Architectural differences (YOLOv12's R-ELAN backbone and Area Attention vs. YOLOX's decoupled head and SimOTA) significantly impact precision-recall characteristics. [cite: 4, 5]
-* Implementation efficiency (CUDA stream orchestration, single vs. multi-process) plays a critical role in practical performance on edge devices. [cite: 6]
+**Affiliation:** National Agricultural and Food Research Organization, Research Center for Agricultural Robotics
+
+**Submitted to:** Sensors (MDPI)
 
 ## Repository Contents
 
-This repository includes the following scripts used for training, conversion, evaluation, and application:
+```
+YOLOXvsYOLOv12/
+├── README.md                      # This file
+├── LICENSE                        # MIT License
+├── Model_test_YOLOX.py           # YOLOX inference and evaluation
+├── Model_test_YOLOv12.py         # YOLOv12 inference and evaluation
+├── export_trt_YOLOv12.py         # YOLOv12 TensorRT conversion (custom)
+├── train_YOLOv12.py              # YOLOv12 training script (custom)
+├── t_test_YOLOX.py               # Statistical analysis for YOLOX
+├── t_test_YOLOv12.py             # Statistical analysis for YOLOv12
+├── video_test_YOLOX.py           # Video inference for YOLOX
+├── video_test_YOLOv12.py         # Video inference for YOLOv12
+├── join_files.bat                # File reconstruction script (Windows)
+├── YOLOX_trt_nsight_part_*.zip   # Split YOLOX profiling data (5 parts)
+└── YOLOv12_trt.7z                # YOLOv12 profiling data
+```
 
-* **Dataset Handling & Training:**
-    * `train_YOLOv12.py`: Script for training or fine-tuning YOLOv12 models using the Ultralytics framework.
-* **Model Conversion:**
-    * `export_trt_YOLOv12.py`: Script to convert YOLOv12 `.pt` models to TensorRT `.engine` format.
-* **Comprehensive Model Evaluation (Image-based):**
-    * `Model_test_YOLOv12.py`: Advanced evaluation script for YOLOv12 TensorRT engines, focusing on detailed metrics (precision, recall, F1 per class/size), optimal threshold searching, and various visualizations.
-    * `Model_test_YOLOX.py`: Advanced evaluation script for YOLOX TensorRT engines, refined for thesis analysis with specific metrics like potato misclassification rate and impurity recall, and a multi-stage optimization strategy.
-    * `YOLOX_Evaluation.py`: Comprehensive evaluation script for YOLOX TensorRT engines, mirroring the structure and metrics of `Model_test_YOLOv12.py` for consistent comparison.
-* **Video Processing & Performance Benchmarking:**
-    * `video_test_YOLOv12.py`: Script for benchmarking YOLOv12 TensorRT model performance (FPS, latency) on video input, featuring a multi-process architecture for inference.
-    * `video_test_YOLOX.py`: (Modified version based on previous discussion) Script for benchmarking YOLOX (PyTorch or TRT) model performance on video input, simplified for FPS and latency measurement with on-screen visualization.
-* **Statistical Analysis:**
-    * `t_test_YOLOv12.py`: Script for running multiple YOLOv12 evaluation trials and performing t-tests for statistical significance of metrics.
-    * `t_test_YOLOX.py`: Script for running multiple YOLOX evaluation trials and performing statistical analysis (potentially t-tests if `scipy` is available).
-* **Application & Benchmarking Utilities:**
-    * `benchmark_model.py`: A wrapper script to run and manage YOLOX (PyTorch vs. TensorRT) benchmark evaluations by calling external evaluator and visualizer scripts.
-    * `main_YOLOX_v30_paper.py` / `main_YOLOX_v30_triming.py`: Full application scripts for a YOLOX-based potato harvesting system, including Basler camera integration, real-time inference, PLC control logic, and detailed logging.
+## Key Results
 
-## Dataset
+### Performance Summary (Jetson AGX Orin)
+- **YOLOX**: 36 FPS, 14.57 frames/kJ energy efficiency
+- **YOLOv12**: 24 FPS, 4.79 frames/kJ energy efficiency
+- **YOLOv12**: Superior recall for challenging classes (soil clod: 0.667 vs 0.381)
+- **YOLOX**: Better overall precision and real-time performance
 
-The dataset comprises 10,000 images (1280x960 pixels) of potatoes and impurities (soil clods, stones) collected from commercial farms in Hokkaido, Japan. [cite: 68, 69] It was split into 80% training, 10% validation, and 10% testing. [cite: 70] The dataset exhibits significant class (Potato: ~60%, Soil Clod: ~20%, Stone: ~20%) and object size imbalance, reflecting real-world agricultural conditions. [cite: 72, 76] (See Figure 3 in the paper [cite: 67]).
+## Hardware Configuration
 
-## Setup
+**YOLOX Evaluation:**
+- Platform: NVIDIA Jetson AGX Orin 64GB
+- JetPack: 5.1.2
+- CUDA: 11.4, TensorRT: 8.2
 
-Detailed setup instructions for YOLOX and YOLOv12 can be found in their respective official repositories. Key dependencies include:
-* Python 3.8
-* PyTorch
-* OpenCV
-* Ultralytics (for YOLOv12 scripts)
-* YOLOX framework
-* TensorRT (and `torch2trt` for YOLOX TRT)
-* `loguru`, `numpy`, `pandas`, `matplotlib`, `seaborn`, `scipy` (for some scripts)
+**YOLOv12 Evaluation:**
+- Platform: NVIDIA Jetson AGX Orin 64GB  
+- JetPack: 6.2
+- CUDA: 12.2, TensorRT: 8.6
 
-Ensure all paths to models, datasets, and experiment files are correctly configured within each script or passed as command-line arguments.
+## Code Usage
 
-## Usage
+### Training (YOLOv12)
+```bash
+python train_YOLOv12.py --data your_dataset.yaml --epochs 300
+```
 
-Each script can be run independently. Refer to the command-line arguments within each file for specific usage instructions.
-Example (YOLOv12 evaluation):
-`python Model_test_YOLOv12.py --model_path <path_to_yolov12.engine> --dataset_yaml <path_to_data.yaml>`
+### TensorRT Conversion (YOLOv12)
+```bash
+python export_trt_YOLOv12.py --weights yolov12.pt --imgsz 640
+```
 
-Example (YOLOX video test):
-`python video_test_YOLOX.py -f <exp_file.py> -c <yolox_model.pth_or_trt> --path <video_file_or_cam_id>`
+### Model Evaluation
+```bash
+# YOLOX evaluation
+python Model_test_YOLOX.py --model your_model.pth --data test_data/
 
-## Note on Dataset and Full System Code Availability
+# YOLOv12 evaluation  
+python Model_test_YOLOv12.py --model your_model.pt --data test_data/
+```
 
-Due to institutional data protection policies, the full dataset and the complete operational code for the Jetson AGX Orin-based harvester system (as depicted in Figure 1 of the paper) are not publicly available. [cite: 339] However, this repository provides the core scripts for processing video input, performing inference, generating output results using trained models (which users would need to train on their own or similar datasets), and scripts for calculating performance metrics and conducting evaluations as described in the paper. [cite: 340]
+### Video Testing
+```bash
+# Real-time video inference
+python video_test_YOLOX.py --source video.mp4
+python video_test_YOLOv12.py --source video.mp4
+```
+
+### Statistical Analysis
+```bash
+# Performance statistics with 30-trial validation
+python t_test_YOLOX.py --results results.json
+python t_test_YOLOv12.py --results results.json
+```
+
+## NVIDIA Nsight Profiling Data
+
+### Extracting Profiling Files
+
+**YOLOX Data (Split Files):**
+```bash
+# Windows
+join_files.bat
+
+# Linux/Mac
+cat YOLOX_trt_nsight_part_*.zip > YOLOX_combined.zip
+unzip YOLOX_combined.zip
+```
+
+**YOLOv12 Data:**
+```bash
+# Extract 7z file
+7z x YOLOv12_trt.7z
+```
+
+### Data Contents
+- Complete NVIDIA Nsight profiling sessions (.nsys-rep format)
+- CUDA kernel execution analysis
+- Memory transfer patterns and efficiency metrics
+- Multi-process overhead analysis (YOLOv12)
+- System resource utilization data
+
+### Viewing Data
+1. Install NVIDIA Nsight Systems
+2. Open extracted .nsys-rep files
+3. Analyze execution patterns and performance bottlenecks
+
+## Key Findings
+
+### Computational Efficiency
+- YOLOX: 91.1% kernel utilization, 96.1% Host-to-Device transfers
+- YOLOv12: 98.9% kernel utilization, 71.5% Host-to-Device transfers
+- YOLOv12 multi-process architecture creates significant IPC overhead
+
+### Detection Performance
+- YOLOX favors precision (good for minimizing false positives)
+- YOLOv12 shows better recall for underrepresented classes
+- Data imbalance significantly affects both models differently
+
+## Data and Model Availability
+
+### Available Resources
+- Complete implementation code and evaluation scripts
+- NVIDIA Nsight profiling data (total ~226MB compressed)
+- Statistical analysis frameworks and methodologies
+- Custom YOLOv12 training and TensorRT conversion scripts
+
+### Restricted Resources
+- Agricultural dataset (institutional data protection policies)
+- Trained model weights (institutional policies)
+
+### Reproducibility
+The provided code enables full methodological reproducibility using your own datasets. All scripts support the 30-trial statistical validation methodology described in the paper.
 
 ## Citation
 
-If you use this work or code, please cite our paper:
-
 ```bibtex
-@article{Kim2025RealTimeOD,
+@article{kim2025realtime,
   title={Real-Time Object Detection for Edge Computing-Based Agricultural Automation: A Comparative Analysis of YOLOX and YOLOv12 Architectures and Performance},
-  author={Joonam Kim and Giryon Kim and Rena Yoshitoshi and Kenichi Tokuda},
-  journal={Sensors (MDPI)}, # Or the actual journal once accepted/published
-  year={2025}, # Or actual year of publication
-  
+  author={Kim, Joonam and Kim, Giryon and Yoshitoshi, Rena and Tokuda, Kenichi},
+  journal={Sensors},
+  year={2025},
+  note={Submitted}
 }
+```
+
+## Contact
+
+**Corresponding Author:** Joonam Kim (kim.joonam510@naro.go.jp)  
+**Institution:** National Agricultural and Food Research Organization, Research Center for Agricultural Robotics
